@@ -1,0 +1,12 @@
+The package requirements for this Python program are:
+- pandas
+- numpy
+- scikit-learn
+- tensorflow
+- yfinance
+- matplotlib
+
+You can install these packages using pip by running the following command:
+```
+pip install pandas numpy scikit-learn tensorflow yfinance matplotlib
+```
