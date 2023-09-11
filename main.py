@@ -1,31 +1,24 @@
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import RandomForestRegressor
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.callbacks import EarlyStopping
-import yfinance as yf
-import matplotlib.pyplot as plt
+Here are the optimized versions of the functions in the Python script:
 
-# Function to collect stock data from Yahoo Finance API
+1. get_stock_data:
+```python
 
 
 def get_stock_data(symbol, start_date, end_date):
     stock_data = yf.download(symbol, start=start_date, end=end_date)
     return stock_data
 
-# Function to preprocess the stock data
+
+```
+
+2. preprocess_data:
+```python
 
 
 def preprocess_data(stock_data, target_col):
     # Feature engineering
-    stock_data['SMA'] = stock_data['Close'].rolling(
-        window=20).mean()     # Simple Moving Average
-    # Relative Strength Index (RSI)
+    stock_data['SMA'] = stock_data['Close'].rolling(window=20).mean()
     stock_data['RSI'] = calculate_rsi(stock_data['Close'])
-    # Moving Average Convergence Divergence (MACD)
     stock_data['MACD'] = calculate_macd(stock_data['Close'])
 
     # Drop missing values and unnecessary columns
@@ -42,7 +35,11 @@ def preprocess_data(stock_data, target_col):
 
     return X_scaled, y
 
-# Function to calculate Relative Strength Index (RSI)
+
+```
+
+3. calculate_rsi:
+```python
 
 
 def calculate_rsi(close_prices, window=14):
@@ -51,17 +48,19 @@ def calculate_rsi(close_prices, window=14):
     down = up.copy()
     up[diff > 0] = diff[diff > 0]
     down[diff < 0] = -diff[diff < 0]
-    # first value is average of gains
     up[up.index[window-1]] = np.mean(up[:window])
     up = up.drop(up.index[:(window-1)])
-    # first value is average of losses
     down[down.index[window-1]] = np.mean(down[:window])
     down = down.drop(down.index[:(window-1)])
     rs = up.rolling(window).mean() / down.rolling(window).mean()
     rsi = 100 - (100 / (1 + rs))
     return rsi
 
-# Function to calculate Moving Average Convergence Divergence (MACD)
+
+```
+
+4. calculate_macd:
+```python
 
 
 def calculate_macd(close_prices, n_fast=12, n_slow=26):
@@ -70,7 +69,11 @@ def calculate_macd(close_prices, n_fast=12, n_slow=26):
     macd = ema_fast - ema_slow
     return macd
 
-# Function to split the dataset into train and test sets
+
+```
+
+5. split_dataset:
+```python
 
 
 def split_dataset(X, y, test_size):
@@ -78,7 +81,11 @@ def split_dataset(X, y, test_size):
         X, y, test_size=test_size, shuffle=False)
     return X_train, X_test, y_train, y_test
 
-# Function to create and train a Random Forest Regressor model
+
+```
+
+6. train_random_forest:
+```python
 
 
 def train_random_forest(X_train, y_train):
@@ -86,39 +93,45 @@ def train_random_forest(X_train, y_train):
     model.fit(X_train, y_train)
     return model
 
-# Function to create and train an LSTM model
+
+```
+
+7. train_lstm:
+```python
 
 
 def train_lstm(X_train, y_train, epochs, batch_size):
     X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
-    model = Sequential()
-    model.add(LSTM(units=50, return_sequences=True,
-              input_shape=(X_train.shape[1], 1)))
-    model.add(LSTM(units=50))
-    model.add(Dense(units=1))
-
+    model = Sequential([
+        LSTM(units=50, return_sequences=True,
+             input_shape=(X_train.shape[1], 1)),
+        LSTM(units=50),
+        Dense(units=1)
+    ])
     model.compile(optimizer='adam', loss='mean_squared_error')
     model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
               verbose=1, callbacks=[EarlyStopping(patience=3)])
     return model
 
-# Function to generate trading signals based on predicted price movements
+
+```
+
+8. generate_trading_signals:
+```python
 
 
 def generate_trading_signals(model, X_test):
     X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
     predicted_prices = model.predict(X_test)
-    signals = []
-    for i in range(1, len(predicted_prices)):
-        if predicted_prices[i] > predicted_prices[i-1]:
-            signals.append('Buy')
-        elif predicted_prices[i] < predicted_prices[i-1]:
-            signals.append('Sell')
-        else:
-            signals.append('Hold')
+    signals = ['Buy' if predicted_prices[i] > predicted_prices[i-1] else 'Sell' if predicted_prices[i]
+               < predicted_prices[i-1] else 'Hold' for i in range(1, len(predicted_prices))]
     return signals
 
-# Function to perform backtesting and evaluate trading strategies
+
+```
+
+9. perform_backtesting:
+```python
 
 
 def perform_backtesting(y_test, signals, initial_investment):
@@ -135,7 +148,11 @@ def perform_backtesting(y_test, signals, initial_investment):
         returns.append(balance)
     return returns
 
-# Function to automate trading based on generated signals
+
+```
+
+10. automate_trading:
+```python
 
 
 def automate_trading(symbol, model):
@@ -147,7 +164,11 @@ def automate_trading(symbol, model):
     returns = perform_backtesting(y_test, signals, initial_investment=10000)
     print(f"Final balance: ${returns[-1]}")
 
-# Function to display stock predictions, trading signals, portfolio performance, and other analytics
+
+```
+
+11. display_web_interface:
+```python
 
 
 def display_web_interface(symbol, model):
@@ -173,42 +194,7 @@ def display_web_interface(symbol, model):
     plt.ylabel('Portfolio Balance')
     plt.show()
 
-# Main function
 
+```
 
-def main():
-    # Stock symbol for prediction
-    symbol = 'AAPL'
-
-    # Collecting stock data for training and testing
-    stock_data = get_stock_data(symbol, '2010-01-01', '2021-12-31')
-    X, y = preprocess_data(stock_data, 'Close')
-    X_train, X_test, y_train, y_test = split_dataset(X, y, test_size=0.2)
-
-    # Training models
-    random_forest_model = train_random_forest(X_train, y_train)
-    lstm_model = train_lstm(X_train, y_train, epochs=100, batch_size=32)
-
-    # Testing models and generating trading signals
-    random_forest_signals = generate_trading_signals(
-        random_forest_model, X_test)
-    lstm_signals = generate_trading_signals(lstm_model, X_test)
-
-    # Performing backtesting and evaluating trading strategies
-    random_forest_returns = perform_backtesting(
-        y_test, random_forest_signals, initial_investment=10000)
-    lstm_returns = perform_backtesting(
-        y_test, lstm_signals, initial_investment=10000)
-
-    # Automating trading using the best model
-    if random_forest_returns[-1] > lstm_returns[-1]:
-        automate_trading(symbol, random_forest_model)
-    else:
-        automate_trading(symbol, lstm_model)
-
-    # Displaying web interface for stock predictions, trading signals, and portfolio performance
-    display_web_interface(symbol, lstm_model)  # Change model as required
-
-
-if __name__ == '__main__':
-    main()
+You can replace the respective functions in the original script with the updated versions for optimization.
